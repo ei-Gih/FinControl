@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinControl</title>
+<link rel="stylesheet" href="style.css">
+    <link rel="icon" href="Imagens/icone.png" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <div>
+      <h1>Fin<span>Control</span></h1>
+      <div class="header-meta" id="hsum">Carregando...</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" onclick="exportCSV()" title="Exportar CSV">📤</button>
+    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Tema">🌙</button>
+  </div>
+</header>
+
+<div class="month-nav" id="monthNav"></div>
+<div class="kpi-grid" id="kpiGrid"></div>
+<div class="insights-bar" id="ibar"></div>
+<div class="fc-row" id="fcrow"></div>
+
+<div class="charts-row">
+  <div class="card"><div class="card-ttl"><span class="dot"></span>Gastos por Categoria</div><div class="ch-wrap"><canvas id="pieChart"></canvas></div></div>
+  <div class="card"><div class="card-ttl"><span class="dot" style="background:var(--accent2)"></span>Receitas vs Despesas</div><div class="ch-wrap"><canvas id="barChart"></canvas></div></div>
+  <div class="card"><div class="card-ttl"><span class="dot" style="background:var(--accent4)"></span>Saldo Acumulado</div><div class="ch-wrap"><canvas id="saldoChart"></canvas></div></div>
+</div>
+
+<div class="cat-goals-grid">
+  <div class="card"><div class="card-ttl"><span class="dot" style="background:var(--accent4)"></span>Distribuição</div><div class="cat-list" id="catList"></div></div>
+  <div class="card"><div class="card-ttl"><span class="dot" style="background:var(--accent3)"></span>Metas por Categoria <span style="margin-left:auto;font-size:10px;cursor:pointer;color:var(--accent);font-weight:600;" onclick="editGoals()">✎ Editar</span></div><div id="catGoals" style="display:flex;flex-direction:column;gap:7px;"></div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-ttl"><span class="dot" style="background:var(--accent2)"></span>Contas Recorrentes <span style="margin-left:auto;font-size:10px;cursor:pointer;color:var(--accent);font-weight:600;" onclick="addRecurring()">+ Add</span></div>
+  <div class="rec-list" id="recList"></div>
+</div>
+
+<div class="add-sec">
+  <div class="btn-row">
+    <button class="btn-eg" onclick="openForm('saida')">+ Novo Gasto</button>
+    <button class="btn-ir" onclick="openForm('entrada')">+ Nova Receita</button>
+  </div>
+  <div class="af" id="addForm">
+    <div class="ftabs">
+      <button class="ftab ae" id="tabE" onclick="setType('saida')">💸 Gasto</button>
+      <button class="ftab" id="tabI" onclick="setType('entrada')">💵 Receita</button>
+    </div>
+    <div class="fg">
+      <div class="fgrp"><label>Data</label><input type="date" id="fDate"></div>
+      <div class="fgrp" id="fCG"><label>Categoria</label>
+        <select id="fCat"><option value="Alimentação">🍽️ Alimentação</option><option value="Compras">🛍️ Compras</option><option value="Carro">🚗 Carro</option><option value="Contas">📄 Contas</option><option value="Transporte">🚌 Transporte</option><option value="Saude">💊 Saúde</option><option value="Cartão">💳 Cartão</option><option value="Estudos">📚 Estudos</option><option value="Outro">📦 Outro</option></select>
+      </div>
+      <div class="fgrp" id="fIG" style="display:none"><label>Origem</label>
+        <select id="fICat"><option value="Salário">💼 Salário</option><option value="Freelance">💻 Freelance</option><option value="Investimento">📈 Investimento</option><option value="Vale">🎁 Vale</option><option value="Empréstimo Recebido">🤝 Empréstimo Recebido</option><option value="Outro">📦 Outro</option></select>
+      </div>
+      <div class="fgrp"><label>Descrição</label><input type="text" id="fDesc" placeholder="Ex: Mercado, Salário..." oninput="autoCat()"></div>
+      <div class="fgrp"><label>Valor (R$)</label><input type="number" id="fVal" placeholder="0,00" step="0.01" min="0"></div>
+      <div class="fgrp"><label>Mês</label><select id="fMonth"></select></div>
+    </div>
+    <div class="inst-row" id="instRow">
+      <label><input type="checkbox" id="fInst" onchange="toggleInst()"> Parcelado</label>
+      <div id="instF" style="display:none;display:flex;gap:9px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-muted);">Total de parcelas:</span>
+        <input type="number" id="fInstN" min="2" max="48" value="2">
+        <span style="font-size:11px;color:var(--text-muted);">Parcela atual:</span>
+        <input type="number" id="fInstC" min="1" max="48" value="1">
+      </div>
+    </div>
+    <div class="fa">
+      <button class="bsub e" id="bsub" onclick="submit()">✓ Adicionar Gasto</button>
+      <button class="bcan" onclick="closeForm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="tbl-sec">
+  <div class="tbl-hdr"><div class="sec-ttl" style="flex:1">Lançamentos</div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;flex-wrap:wrap;gap:7px;">
+    <div class="fr">
+      <select class="fsel" id="ftType" onchange="renderTable()"><option value="">Tudo</option><option value="saida">Gastos</option><option value="entrada">Receitas</option></select>
+      <select class="fsel" id="ftCat" onchange="renderTable()"><option value="">Todas cats</option><option value="Alimentação">Alimentação</option><option value="Compras">Compras</option><option value="Carro">Carro</option><option value="Contas">Contas</option><option value="Transporte">Transporte</option><option value="Saude">Saúde</option><option value="Cartão">Cartão</option><option value="Salário">Salário</option><option value="Outro">Outro</option></select>
+      <select class="fsel" id="ftOrd" onchange="renderTable()"><option value="date-desc">Data ↓</option><option value="date-asc">Data ↑</option><option value="val-desc">Valor ↓</option><option value="val-asc">Valor ↑</option></select>
+      <button class="exp-btn" onclick="exportCSV()">📤 CSV</button>
+    </div>
+    <div class="sw"><input type="text" id="srch" placeholder="Buscar..." oninput="debounceSrch()"></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="tt"><thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th></th></tr></thead>
+    <tbody id="tbody"></tbody></table>
+    <div id="empty" class="empty" style="display:none"><span>🔍</span>Nenhum resultado</div>
+  </div>
+  <div class="pg" id="pag"></div>
+</div>
+</div>
+
+<button class="fab" onclick="openForm('saida')">+</button>
+
+<div class="mo" id="editMo">
+  <div class="mb">
+    <div class="mttl">Editar Lançamento <button class="mcl" onclick="closeMo()">✕</button></div>
+    <div class="fg" style="margin-bottom:13px;">
+      <div class="fgrp"><label>Data</label><input type="date" id="eDate"></div>
+      <div class="fgrp"><label>Categoria</label><input type="text" id="eCat"></div>
+      <div class="fgrp"><label>Descrição</label><input type="text" id="eDesc"></div>
+      <div class="fgrp"><label>Valor (R$)</label><input type="number" id="eVal" step="0.01" min="0"></div>
+    </div>
+    <div class="fa"><button class="bsub e" onclick="saveEdit()">✓ Salvar</button><button class="bcan" onclick="closeMo()">Cancelar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
