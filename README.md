@@ -36,7 +36,7 @@ A aplicação permite acompanhar gastos, analisar categorias, visualizar tendên
 
 ##  Visite o Site
 
-Confira com Ficou o Projeto [Clicando Aqui](https://studyflow-mystudies.netlify.app)
+Confira com Ficou o Projeto [Clicando Aqui](https://fincontrol-pessoal.netlify.app)
 
 ---
 
